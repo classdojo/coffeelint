@@ -6,249 +6,249 @@ coffeelint = require path.join('..', 'lib', 'coffeelint')
 
 # Return the cyclomatic complexity of a code snippet with one function.
 getComplexity = (source) ->
-    config = {cyclomatic_complexity : {level: 'error', value: 0}}
-    errors = coffeelint.lint(source, config)
-    assert.isNotEmpty(errors)
-    assert.lengthOf(errors, 1)
-    error = errors[0]
-    assert.equal(error.rule, 'cyclomatic_complexity')
-    return error.context
+  config = {cyclomatic_complexity : {level: 'error', value: 0}}
+  errors = coffeelint.lint(source, config)
+  assert.isNotEmpty(errors)
+  assert.lengthOf(errors, 1)
+  error = errors[0]
+  assert.equal(error.rule, 'cyclomatic_complexity')
+  return error.context
 
 
 vows.describe('cyclomatic complexity').addBatch({
 
-    'Cyclomatic complexity' :
+  'Cyclomatic complexity' :
 
-        topic : """
-            x = ->
-              1 and 2 and 3 and
-              4 and 5 and 6 and
-              7 and 8 and 9 and
-              10 and 11
-            """
+    topic : """
+      x = ->
+        1 and 2 and 3 and
+        4 and 5 and 6 and
+        7 and 8 and 9 and
+        10 and 11
+      """
 
-        'defaults to ignore' : (source) ->
-            errors = coffeelint.lint(source)
-            assert.isArray(errors)
-            assert.isEmpty(errors)
+    'defaults to ignore' : (source) ->
+      errors = coffeelint.lint(source)
+      assert.isArray(errors)
+      assert.isEmpty(errors)
 
-        'can be enabled' : (source) ->
-            config = {cyclomatic_complexity : {level: 'error'}}
-            errors = coffeelint.lint(source, config)
-            assert.isArray(errors)
-            assert.lengthOf(errors, 1)
-            error = errors[0]
-            assert.equal(error.rule, 'cyclomatic_complexity')
+    'can be enabled' : (source) ->
+      config = {cyclomatic_complexity : {level: 'error'}}
+      errors = coffeelint.lint(source, config)
+      assert.isArray(errors)
+      assert.lengthOf(errors, 1)
+      error = errors[0]
+      assert.equal(error.rule, 'cyclomatic_complexity')
 
-        'can be enabled with configurable complexity' : (source) ->
-            config = {cyclomatic_complexity : {level: 'error', value: 12}}
-            errors = coffeelint.lint(source)
-            assert.isArray(errors)
-            assert.isEmpty(errors)
+    'can be enabled with configurable complexity' : (source) ->
+      config = {cyclomatic_complexity : {level: 'error', value: 12}}
+      errors = coffeelint.lint(source)
+      assert.isArray(errors)
+      assert.isEmpty(errors)
 
-    'An empty function' :
+  'An empty function' :
 
-        topic : "x = () -> 1234"
+    topic : "x = () -> 1234"
 
-        'has a complexity of one' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 1)
+    'has a complexity of one' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 1)
 
-    'If statement' :
+  'If statement' :
 
-        topic : "x = () -> 2 if $ == true"
+    topic : "x = () -> 2 if $ == true"
 
-        'increments the complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
-
-
-    'If Else statement' :
-
-        topic : 'y = -> if $ then 1 else 3'
-
-        'increments the complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
-
-    'If ElseIf statement' :
-
-        topic : """
-            x = ->
-              if 1233
-                'abc'
-              else if 456
-                'xyz'
-            """
-
-        'has a complexity of three' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 3)
-
-    'If If-Else Else statement' :
-
-        topic : """
-            z = () ->
-              if x
-                1
-              else if y
-                2
-              else
-                3
-            """
-
-        'has a complexity of three' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 3)
-
-    'Nested if statements' :
-
-        topic : """
-            z = () ->
-              if abc?
-                if other?
-                  123
-            """
-
-        'has a complexity of three' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 3)
+    'increments the complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
 
 
-    'A while loop' :
+  'If Else statement' :
 
-        topic : """
-            x = () ->
-              while 1
-                'asdf'
-            """
+    topic : 'y = -> if $ then 1 else 3'
 
-        'increments complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
+    'increments the complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
 
-    'An until loop' :
+  'If ElseIf statement' :
 
-        topic : "x = () -> log 'a' until $?"
+    topic : """
+      x = ->
+        if 1233
+        'abc'
+        else if 456
+        'xyz'
+      """
 
-        'increments complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
+    'has a complexity of three' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 3)
 
-    'A for loop' :
+  'If If-Else Else statement' :
 
-        topic : """
-            x = () ->
-              for i in window
-                log i
-            """
+    topic : """
+      z = () ->
+        if x
+        1
+        else if y
+        2
+        else
+        3
+      """
 
-        'increments complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
+    'has a complexity of three' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 3)
 
-    'A list comprehension' :
+  'Nested if statements' :
 
-        topic : "x = -> [a for a in window]"
+    topic : """
+      z = () ->
+        if abc?
+        if other?
+          123
+      """
 
-        'increments complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
+    'has a complexity of three' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 3)
 
-    'Try / Catch blocks' :
 
-        topic : """
-            x = () ->
-              try
-                divide("byZero")
-              catch error
-                log("uh oh")
-            """
+  'A while loop' :
 
-        'increments complexity' : (source) ->
-            assert.equal(getComplexity(source), 2)
+    topic : """
+      x = () ->
+        while 1
+        'asdf'
+      """
 
-    'Try / Catch / Finally blocks' :
+    'increments complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
 
-        topic : """
-            x = () ->
-              try
-                divide("byZero")
-              catch error
-                log("uh oh")
-              finally
-                clean()
-            """
+  'An until loop' :
 
-        'increments complexity' : (source) ->
-            assert.equal(getComplexity(source), 2)
+    topic : "x = () -> log 'a' until $?"
 
-    'Switch statements without an else' :
+    'increments complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
 
-        topic : '''
-            x = () ->
-              switch a
-                when "b" then "b"
-                when "c" then "c"
-                when "d" then "d"
-            '''
+  'A for loop' :
 
-        'increase complexity by the number of cases' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 4)
+    topic : """
+      x = () ->
+        for i in window
+        log i
+      """
 
-    'Switch statements with an else' :
+    'increments complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
 
-        topic : '''
-            x = () ->
-              switch a
-                when "b" then "b"
-                when "c" then "c"
-                when "d" then "d"
-                else "e"
-            '''
+  'A list comprehension' :
 
-        'increase complexity by the number of cases' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 4)
+    topic : "x = -> [a for a in window]"
 
-    'And operators' :
+    'increments complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
 
-        topic : 'x = () -> $ and window'
+  'Try / Catch blocks' :
 
-        'increments the complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
+    topic : """
+      x = () ->
+        try
+        divide("byZero")
+        catch error
+        log("uh oh")
+      """
 
-    'Or operators' :
+    'increments complexity' : (source) ->
+      assert.equal(getComplexity(source), 2)
 
-        topic : 'x = () -> $ or window'
+  'Try / Catch / Finally blocks' :
 
-        'increments the complexity' : (source) ->
-            complexity = getComplexity(source)
-            assert.equal(complexity, 2)
+    topic : """
+      x = () ->
+        try
+        divide("byZero")
+        catch error
+        log("uh oh")
+        finally
+        clean()
+      """
 
-    'A complicated example' :
+    'increments complexity' : (source) ->
+      assert.equal(getComplexity(source), 2)
 
-        topic : """
-            x = () ->
-              if a and b and c or d and c or e
-                if x or d or e of f
-                  1
-              else if window
-                while 1 and 3
-                  2
-              while false
-                y
-              return false
-            """
+  'Switch statements without an else' :
 
-        'works' : (source) ->
-            config = {cyclomatic_complexity : {level: 'error'}}
-            errors = coffeelint.lint(source, config)
-            assert.isArray(errors)
-            assert.lengthOf(errors, 1)
-            error = errors[0]
-            assert.equal(error.rule, 'cyclomatic_complexity')
+    topic : '''
+      x = () ->
+        switch a
+        when "b" then "b"
+        when "c" then "c"
+        when "d" then "d"
+      '''
+
+    'increase complexity by the number of cases' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 4)
+
+  'Switch statements with an else' :
+
+    topic : '''
+      x = () ->
+        switch a
+        when "b" then "b"
+        when "c" then "c"
+        when "d" then "d"
+        else "e"
+      '''
+
+    'increase complexity by the number of cases' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 4)
+
+  'And operators' :
+
+    topic : 'x = () -> $ and window'
+
+    'increments the complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
+
+  'Or operators' :
+
+    topic : 'x = () -> $ or window'
+
+    'increments the complexity' : (source) ->
+      complexity = getComplexity(source)
+      assert.equal(complexity, 2)
+
+  'A complicated example' :
+
+    topic : """
+      x = () ->
+        if a and b and c or d and c or e
+        if x or d or e of f
+          1
+        else if window
+        while 1 and 3
+          2
+        while false
+        y
+        return false
+      """
+
+    'works' : (source) ->
+      config = {cyclomatic_complexity : {level: 'error'}}
+      errors = coffeelint.lint(source, config)
+      assert.isArray(errors)
+      assert.lengthOf(errors, 1)
+      error = errors[0]
+      assert.equal(error.rule, 'cyclomatic_complexity')
 
 }).export(module)

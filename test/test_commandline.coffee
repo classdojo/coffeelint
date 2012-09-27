@@ -17,177 +17,177 @@ coffeelintPath = path.join('bin', 'coffeelint')
 # args. Callback will be called with (error, stdout,
 # stderr)
 commandline = (args, callback) ->
-    exec("#{coffeelintPath} #{args.join(" ")}", callback)
+  exec("#{coffeelintPath} #{args.join(" ")}", callback)
 
 
 
 vows.describe('commandline').addBatch({
 
-    'with no args' :
+  'with no args' :
 
-        topic : () ->
-            commandline([], this.callback)
-            return undefined
+    topic : () ->
+      commandline([], this.callback)
+      return undefined
 
-        'shows usage' : (error, stdout, stderr) ->
-            assert.isNotNull(error)
-            assert.notEqual(error.code, 0)
-            assert.include(stderr, "Usage")
-            assert.isEmpty(stdout)
+    'shows usage' : (error, stdout, stderr) ->
+      assert.isNotNull(error)
+      assert.notEqual(error.code, 0)
+      assert.include(stderr, "Usage")
+      assert.isEmpty(stdout)
 
-    'version' :
-        topic : () ->
-            commandline ["--version"], this.callback
-            return undefined
+  'version' :
+    topic : () ->
+      commandline ["--version"], this.callback
+      return undefined
 
-        'exists' : (error, stdout, stderr) ->
-            assert.isNull(error)
-            assert.isEmpty(stderr)
-            assert.isString(stdout)
-            assert.include(stdout, coffeelint.VERSION)
+    'exists' : (error, stdout, stderr) ->
+      assert.isNull(error)
+      assert.isEmpty(stderr)
+      assert.isString(stdout)
+      assert.include(stdout, coffeelint.VERSION)
 
-    'with clean source' :
+  'with clean source' :
 
-        topic : () ->
-            commandline ["test/fixtures/clean.coffee"], this.callback
-            return undefined
+    topic : () ->
+      commandline ["test/fixtures/clean.coffee"], this.callback
+      return undefined
 
-        'passes' : (error, stdout, stderr) ->
-            assert.isNull(error)
-            assert.include(stdout, '0 errors and 0 warnings')
-            assert.isEmpty(stderr)
+    'passes' : (error, stdout, stderr) ->
+      assert.isNull(error)
+      assert.include(stdout, '0 errors and 0 warnings')
+      assert.isEmpty(stderr)
 
-    'with failing source' :
+  'with failing source' :
 
-        topic : () ->
-            commandline ["test/fixtures/fourspaces.coffee"], this.callback
-            return undefined
+    topic : () ->
+      commandline ["test/fixtures/fourspaces.coffee"], this.callback
+      return undefined
 
-        'works' : (error, stdout, stderr) ->
-            assert.isNotNull(error)
-            assert.include(stdout.toLowerCase(), 'line')
+    'works' : (error, stdout, stderr) ->
+      assert.isNotNull(error)
+      assert.include(stdout.toLowerCase(), 'line')
 
-    'with custom configuration' :
+  'with custom configuration' :
 
-        topic : () ->
-            args = [
-                "-f"
-                "test/fixtures/fourspaces.json"
-                "test/fixtures/fourspaces.coffee"
-            ]
+    topic : () ->
+      args = [
+        "-f"
+        "test/fixtures/fourspaces.json"
+        "test/fixtures/fourspaces.coffee"
+      ]
 
-            commandline args, this.callback
-            return undefined
+      commandline args, this.callback
+      return undefined
 
-        'works' : (error, stdout, stderr) ->
-            assert.isNull(error)
+    'works' : (error, stdout, stderr) ->
+      assert.isNull(error)
 
-    'with multiple sources'  :
+  'with multiple sources'  :
 
-        topic : () ->
-            args = [
-                "-f"
-                "test/fixtures/fourspaces.json"
-                "test/fixtures/fourspaces.coffee"
-                "test/fixtures/clean.coffee"
-            ]
+    topic : () ->
+      args = [
+        "-f"
+        "test/fixtures/fourspaces.json"
+        "test/fixtures/fourspaces.coffee"
+        "test/fixtures/clean.coffee"
+      ]
 
-            commandline args, this.callback
-            return undefined
+      commandline args, this.callback
+      return undefined
 
-        'works' : (error, stdout, stderr) ->
-            assert.isNotNull(error)
+    'works' : (error, stdout, stderr) ->
+      assert.isNotNull(error)
 
-    'with example configuration' :
+  'with example configuration' :
 
-        topic : () ->
-            args = [
-                "-f"
-                "examples/coffeelint.json"
-                "test/fixtures/clean.coffee"
-            ]
+    topic : () ->
+      args = [
+        "-f"
+        "examples/coffeelint.json"
+        "test/fixtures/clean.coffee"
+      ]
 
-            commandline args, this.callback
-            return undefined
+      commandline args, this.callback
+      return undefined
 
-        'works' : (error, stdout, stderr) ->
-            assert.isNull(error)
+    'works' : (error, stdout, stderr) ->
+      assert.isNull(error)
 
-    'does not fail on warnings' :
+  'does not fail on warnings' :
 
-        topic : () ->
-            args = [
-                "-f"
-                "test/fixtures/twospaces.warning.json"
-                "test/fixtures/fourspaces.coffee"
-            ]
+    topic : () ->
+      args = [
+        "-f"
+        "test/fixtures/twospaces.warning.json"
+        "test/fixtures/fourspaces.coffee"
+      ]
 
-            commandline args, this.callback
-            return undefined
+      commandline args, this.callback
+      return undefined
 
-        'works' : (error, stdout, stderr) ->
-            assert.isNull(error)
+    'works' : (error, stdout, stderr) ->
+      assert.isNull(error)
 
-    'with broken source' :
+  'with broken source' :
 
-        topic : () ->
-            args = ["test/fixtures/syntax_error.coffee"]
-            commandline args, this.callback
-            return undefined
+    topic : () ->
+      args = ["test/fixtures/syntax_error.coffee"]
+      commandline args, this.callback
+      return undefined
 
-        'fails' : (error, stdout, stderr) ->
-            assert.isNotNull(error)
+    'fails' : (error, stdout, stderr) ->
+      assert.isNotNull(error)
 
-    'recurses subdirectories' :
+  'recurses subdirectories' :
 
-        topic : () ->
-            args = [
-                '-r',
-                'test/fixtures/clean.coffee',
-                'test/fixtures/subdir'
-            ]
-            commandline args, this.callback
-            return undefined
+    topic : () ->
+      args = [
+        '-r',
+        'test/fixtures/clean.coffee',
+        'test/fixtures/subdir'
+      ]
+      commandline args, this.callback
+      return undefined
 
-        'and reports errors' : (error, stdout, stderr) ->
-            assert.isNotNull(error, "returned err")
-            assert.include(stdout.toLowerCase(), 'line')
+    'and reports errors' : (error, stdout, stderr) ->
+      assert.isNotNull(error, "returned err")
+      assert.include(stdout.toLowerCase(), 'line')
 
-    'allows JSLint XML reporting' :
+  'allows JSLint XML reporting' :
 
-        # FIXME: Not sure how to unit test escaping w/o major refactoring
-        topic : () ->
-            args = [
-                '-f'
-                'test/fixtures/coffeelint.json'
-                'test/fixtures/cyclo_fail.coffee'
-                '--jslint'
-            ]
-            commandline args, this.callback
-            return undefined
+    # FIXME: Not sure how to unit test escaping w/o major refactoring
+    topic : () ->
+      args = [
+        '-f'
+        'test/fixtures/coffeelint.json'
+        'test/fixtures/cyclo_fail.coffee'
+        '--jslint'
+      ]
+      commandline args, this.callback
+      return undefined
 
-        'Handles cyclomatic complexity check' : (error, stdout, stderr) ->
-            assert.include(stdout.toLowerCase(), 'cyclomatic complexity')
-    'using stdin':
+    'Handles cyclomatic complexity check' : (error, stdout, stderr) ->
+      assert.include(stdout.toLowerCase(), 'cyclomatic complexity')
+  'using stdin':
 
-        'with working string':
-            topic: () ->
-                exec("echo y = 1 | #{coffeelintPath} --stdin", this.callback)
-                return undefined
+    'with working string':
+      topic: () ->
+        exec("echo y = 1 | #{coffeelintPath} --stdin", this.callback)
+        return undefined
 
-            'passes': (error, stdout, stderr) ->
-                assert.isNull(error)
-                assert.isEmpty(stderr)
-                assert.isString(stdout)
-                assert.include(stdout, '0 errors and 0 warnings')
+      'passes': (error, stdout, stderr) ->
+        assert.isNull(error)
+        assert.isEmpty(stderr)
+        assert.isString(stdout)
+        assert.include(stdout, '0 errors and 0 warnings')
 
-        'with failing string due to whitespace':
-            topic: () ->
-                exec("echo 'x = 1 '| #{coffeelintPath} --stdin", this.callback)
-                return undefined
+    'with failing string due to whitespace':
+      topic: () ->
+        exec("echo 'x = 1 '| #{coffeelintPath} --stdin", this.callback)
+        return undefined
 
-            'fails': (error, stdout, stderr) ->
-                assert.isNotNull(error)
-                assert.include(stdout.toLowerCase(), 'trailing whitespace')
+      'fails': (error, stdout, stderr) ->
+        assert.isNotNull(error)
+        assert.include(stdout.toLowerCase(), 'trailing whitespace')
 
 }).export(module)
