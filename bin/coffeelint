@@ -184,7 +184,7 @@ CoffeeLint is freely distributable under the MIT license.
           continue;
         }
         o = e.level === 'error' ? this.err : this.warn;
-        msg = "     " + ("" + o + " " + (this.stylize("#" + e.lineNumber, color)) + ": " + e.message + ".");
+        msg = "   " + ("" + o + " " + (this.stylize("#" + e.lineNumber, color)) + ": " + e.message + ".");
         if (e.context) {
           msg += " " + e.context + ".";
         }
@@ -259,7 +259,7 @@ CoffeeLint is freely distributable under the MIT license.
           this.print("<file name=\"" + path + "\">");
           for (_i = 0, _len = errors.length; _i < _len; _i++) {
             e = errors[_i];
-            this.print("<issue line=\"" + e.lineNumber + "\"\n        reason=\"[" + (this.escape(e.level)) + "] " + (this.escape(e.message)) + "\"\n        evidence=\"" + (this.escape(e.context)) + "\"/>");
+            this.print("<issue line=\"" + e.lineNumber + "\"\n    reason=\"[" + (this.escape(e.level)) + "] " + (this.escape(e.message)) + "\"\n    evidence=\"" + (this.escape(e.context)) + "\"/>");
           }
           this.print("</file>");
         }
