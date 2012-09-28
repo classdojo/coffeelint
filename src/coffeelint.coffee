@@ -2,6 +2,7 @@
 CoffeeLint
 
 Copyright (c) 2011 Matthew Perpick.
+Modified 2012 by gareth@classdojo.com (Gareth Aye)
 CoffeeLint is freely distributable under the MIT license.
 ###
 
@@ -121,7 +122,7 @@ createError = (rule, attrs = {}) ->
     null
 
 # Store suppressions in the form of { line #: type }
-block_config =
+blockConfig =
   enable: {}
   disable: {}
 
@@ -129,7 +130,6 @@ block_config =
 # A class that performs regex checks on each line of the source.
 #
 class LineLinter
-
   constructor: (source, config, tokensByLine) ->
     @source = source
     @config = config
@@ -144,18 +144,19 @@ class LineLinter
     for line, lineNumber in @lines
       @lineNumber = lineNumber
       @line = line
-      error = @lintLine()
-      errors.push(error) if error
-    errors
+      errors = errors.concat(@lintLine())
+    return errors
 
   # Return an error if the line contained failed a rule, null otherwise.
   lintLine: () ->
-    return @checkTabs() or
-         @checkTrailingWhitespace() or
-         @checkLineLength() or
-         @checkTrailingSemicolon() or
-         @checkLineEndings() or
-         @checkComments()
+    errors = []
+    errors.push(@checkTabs())
+    errors.push(@checkTrailingWhitespace())
+    errors.push(@checkLineLength())
+    errors.push(@checkTrailingSemicolon())
+    errors.push(@checkLineEndings())
+    errors.push(@checkComments())
+    return errors.filter (error) -> error != null
 
   checkTabs: () ->
     # Only check lines that have compiled tokens. This helps
@@ -220,7 +221,7 @@ class LineLinter
       if result[2]?
         for r in result[2].split(',')
           rules.push r.replace(/^\s+|\s+$/g, "")
-      block_config[cmd][@lineNumber] = rules
+      blockConfig[cmd][@lineNumber] = rules
     return null
 
   createLineError: (rule, attrs = {}) ->
@@ -573,39 +574,35 @@ class ASTLinter
     return  createError 'coffeescript_error', attrs
 
 
-
-# Merge default and user configuration.
-mergeDefaultConfig = (userConfig) ->
-  config = {}
-  for rule, ruleConfig of coffeelint.Rule
-    config[rule] = defaults(userConfig[rule], ruleConfig)
-  return config
-
-
 # Check the source against the given configuration and return an array
 # of any errors found. An error is an object with the following
 # properties:
 #
 #   {
-#     rule:    'Name of the violated rule',
+#     rule:       'Name of the violated rule',
 #     lineNumber: 'Number of the line that caused the violation',
-#     level:    'The error level of the violated rule',
-#     message:  'Information about the violated rule',
-#     context:  'Optional details about why the rule was violated'
+#     level:      'The error level of the violated rule',
+#     message:    'Information about the violated rule',
+#     context:    'Optional details about why the rule was violated'
 #   }
 #
 coffeelint.lint = (source, userConfig = {}) ->
-  config = mergeDefaultConfig(userConfig)
+  lines = source.split('\n')
+
+  # Merge default and user configuration.
+  config = {}
+  for k, v of coffeelint.Rule
+    config[k] = defaults(userConfig[k], v)
 
   # Check ahead for inline enabled rules
-  disabled_initially = []
-  for l in source.split('\n')
-    s = coffeelint.Regexes.CONFIG_STATEMENT.exec(l)
+  initiallyDisabled = []
+  for line in lines
+    s = coffeelint.Regexes.CONFIG_STATEMENT.exec(line)
     if s? and s.length > 2 and 'enable' in s
       for r in s[1..]
         unless r in ['enable','disable']
           unless r of config and config[r].level in ['warn','error']
-            disabled_initially.push r
+            initiallyDisabled.push(r)
             config[r] = { level: 'error' }
 
    # Do AST linting first so all compile errors are caught.
@@ -634,30 +631,30 @@ coffeelint.lint = (source, userConfig = {}) ->
         j++
 
   # Disable/enable rules for inline blocks
-  all_errors = errors
+  allErrors = errors
   errors = []
-  disabled = disabled_initially
-  next_line = 0
-  for i in [0...source.split('\n').length]
-    for cmd of block_config
-      rules = block_config[cmd][i]
+  disabled = initiallyDisabled
+  nextLine = 0
+  for i in [0...lines.length]
+    for cmd of blockConfig
+      rules = blockConfig[cmd][i]
       {
         'disable': ->
           disabled = disabled.concat(rules)
         'enable': ->
           difference(disabled, rules)
-          disabled = disabled_initially if rules.length is 0
+          disabled = initiallyDisabled if rules.length is 0
       }[cmd]() if rules?
     # advance line and append relevent messages
-    while next_line is i and all_errors.length > 0
-      next_line = all_errors[0].lineNumber - 1
-      e = all_errors[0]
+    while nextLine is i and allErrors.length > 0
+      nextLine = allErrors[0].lineNumber - 1
+      e = allErrors[0]
       if e.lineNumber is i + 1 or not e.lineNumber?
-        e = all_errors.shift()
+        e = allErrors.shift()
         errors.push e unless e.rule in disabled
 
-  block_config =
+  blockConfig =
     'enable': {}
     'disable': {}
 
-  errors
+  return errors
