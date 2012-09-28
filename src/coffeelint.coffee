@@ -7,16 +7,16 @@ CoffeeLint is freely distributable under the MIT license.
 ###
 
 
-# Coffeelint's namespace.
+# Coffeelint"s namespace.
 coffeelint = {}
 
 if exports?
-  # If we're running in node, export our module and
+  # If we"re running in node, export our module and
   # load dependencies.
   coffeelint = exports
-  CoffeeScript = require 'coffee-script'
+  CoffeeScript = require "coffee-script"
 else
-  # If we're in the browser, export out module to
+  # If we"re in the browser, export out module to
   # global scope. Assume CoffeeScript is already
   # loaded.
   this.coffeelint = coffeelint
@@ -29,62 +29,62 @@ coffeelint.VERSION = "0.5.2"
 
 # CoffeeLint error levels.
 coffeelint.Level =
-  ERROR: 'error'
-  WARN: 'warn'
-  IGNORE: 'ignore'
+  ERROR: "error"
+  WARN: "warn"
+  IGNORE: "ignore"
 
 
-# CoffeeLint's default rule configuration.
+# CoffeeLint"s default rule configuration.
 coffeelint.Rule =
   no_tabs:
     level: coffeelint.Level.ERROR
-    message: 'Line contains tab indentation'
+    message: "Line contains tab indentation"
   no_trailing_whitespace:
     level: coffeelint.Level.ERROR
-    message: 'Line ends with trailing whitespace'
+    message: "Line ends with trailing whitespace"
   max_line_length:
     value: 80
     level: coffeelint.Level.ERROR
-    message: 'Line exceeds maximum allowed length'
+    message: "Line exceeds maximum allowed length"
   camel_case_classes:
     level: coffeelint.Level.ERROR
-    message: 'Class names should be camel cased'
+    message: "Class names should be camel cased"
   indentation:
     value: 2
     level: coffeelint.Level.ERROR
-    message: 'Line contains inconsistent indentation'
+    message: "Line contains inconsistent indentation"
   no_implicit_braces:
     level: coffeelint.Level.IGNORE
-    message: 'Implicit braces are forbidden'
+    message: "Implicit braces are forbidden"
   no_trailing_semicolons:
     level: coffeelint.Level.ERROR
-    message: 'Line contains a trailing semicolon'
+    message: "Line contains a trailing semicolon"
   no_plusplus:
     level: coffeelint.Level.IGNORE
-    message: 'The increment and decrement operators are forbidden'
+    message: "The increment and decrement operators are forbidden"
   no_throwing_strings:
     level: coffeelint.Level.ERROR
-    message: 'Throwing strings is forbidden'
+    message: "Throwing strings is forbidden"
   cyclomatic_complexity:
     value: 10
     level: coffeelint.Level.IGNORE
-    message: 'The cyclomatic complexity is too damn high'
+    message: "The cyclomatic complexity is too damn high"
   no_backticks:
     level: coffeelint.Level.ERROR
-    message: 'Backticks are forbidden'
+    message: "Backticks are forbidden"
   line_endings:
     level: coffeelint.Level.IGNORE
-    value: 'unix' # or 'windows'
-    message: 'Line contains incorrect line endings'
+    value: "unix" # or "windows"
+    message: "Line contains incorrect line endings"
   no_implicit_parens:
     level: coffeelint.Level.IGNORE
-    message: 'Implicit parens are forbidden'
+    message: "Implicit parens are forbidden"
   space_operators:
     level: coffeelint.Level.IGNORE
-    message: 'Operators must be spaced properly'
+    message: "Operators must be spaced properly"
   coffeescript_error:
     level: coffeelint.Level.ERROR
-    message: '' # The default coffeescript error is fine.
+    message: "" # The default coffeescript error is fine.
 
 
 # Some repeatedly used regular expressions.
@@ -136,7 +136,7 @@ class LineLinter
     @line = null
     @lineNumber = 0
     @tokensByLine = tokensByLine
-    @lines = @source.split('\n')
+    @lines = @source.split("\n")
     @lineCount = @lines.length
 
   lint: () ->
@@ -164,19 +164,19 @@ class LineLinter
     # since they are all reduced to a single token whose line number
     # is the start of the expression.
     indentation = @line.split(coffeelint.Regexes.INDENTATION)[0]
-    if @lineHasToken() and '\t' in indentation
-      @createLineError('no_tabs')
+    if @lineHasToken() and "\t" in indentation
+      @createLineError("no_tabs")
     else
       null
 
   checkTrailingWhitespace: () ->
     if coffeelint.Regexes.TRAILING_WHITESPACE.test(@line)
-      @createLineError('no_trailing_whitespace')
+      @createLineError("no_trailing_whitespace")
     else
       null
 
   checkLineLength: () ->
-    rule = 'max_line_length'
+    rule = "max_line_length"
     max = @config[rule]?.value
     if max and max < @line.length
       @createLineError(rule)
@@ -187,24 +187,24 @@ class LineLinter
     hasSemicolon = coffeelint.Regexes.TRAILING_SEMICOLON.test(@line)
     [first..., last] = @getLineTokens()
     hasNewLine = last and last.newLine?
-    # Don't throw errors when the contents of  multiline strings,
+    # Don"t throw errors when the contents of  multiline strings,
     # regexes and the like end in ";"
     if hasSemicolon and not hasNewLine and @lineHasToken()
-      @createLineError('no_trailing_semicolons')
+      @createLineError("no_trailing_semicolons")
     else
       return null
 
   checkLineEndings: () ->
-    rule = 'line_endings'
+    rule = "line_endings"
     ending = @config[rule]?.value
 
     return null if not ending or @isLastLine() or not @line
 
     lastChar = @line[@line.length - 1]
-    valid = if ending == 'windows'
-      lastChar == '\r'
-    else if ending == 'unix'
-      lastChar != '\r'
+    valid = if ending == "windows"
+      lastChar == "\r"
+    else if ending == "unix"
+      lastChar != "\r"
     else
       throw new Error("unknown line ending type: #{ending}")
     if not valid
@@ -219,7 +219,7 @@ class LineLinter
       cmd = result[1]
       rules = []
       if result[2]?
-        for r in result[2].split(',')
+        for r in result[2].split(",")
           rules.push r.replace(/^\s+|\s+$/g, "")
       blockConfig[cmd][@lineNumber] = rules
     return null
@@ -241,7 +241,7 @@ class LineLinter
     @tokensByLine[@lineNumber] || []
 
 #
-# A class that performs checks on the output of CoffeeScript's
+# A class that performs checks on the output of CoffeeScript"s
 # lexer.
 #
 class LexicalLinter
@@ -250,12 +250,12 @@ class LexicalLinter
     @source = source
     @tokens = CoffeeScript.tokens(source)
     @config = config
-    @i = 0        # The index of the current token we're linting.
+    @i = 0        # The index of the current token we"re linting.
     @tokensByLine = {}  # A map of tokens by line.
     @arrayTokens = []   # A stack tracking the array token pairs.
     @parenTokens = []   # A stack tracking the parens token pairs.
     @callTokens = []   # A stack tracking the call token pairs.
-    @lines = source.split('\n')
+    @lines = source.split("\n")
 
   # Return a list of errors encountered in the given source.
   lint: () ->
@@ -296,28 +296,28 @@ class LexicalLinter
   # Lint the given array token.
   lintArray: (token) ->
     # Track the array token pairs
-    if token[0] == '['
+    if token[0] == "["
       @arrayTokens.push(token)
-    else if token[0] == ']'
+    else if token[0] == "]"
       @arrayTokens.pop()
-    # Return null, since we're not really linting
+    # Return null, since we"re not really linting
     # anything here.
     null
 
   lintParens: (token) ->
-    if token[0] == '('
+    if token[0] == "("
       p1 = @peek(-1)
       n1 = @peek(1)
       n2 = @peek(2)
-      # String interpolations start with '' + so start the type co-ercion,
-      # so track if we're inside of one. This is most definitely not
+      # String interpolations start with "" + so start the type co-ercion,
+      # so track if we"re inside of one. This is most definitely not
       # 100% true but what else can we do?
-      i = n1 and n2 and n1[0] == 'STRING' and n2[0] == '+'
+      i = n1 and n2 and n1[0] == "STRING" and n2[0] == "+"
       token.isInterpolation = i
       @parenTokens.push(token)
     else
       @parenTokens.pop()
-    # We're not linting, just tracking interpolations.
+    # We"re not linting, just tracking interpolations.
     null
 
   isInInterpolation: () ->
@@ -331,36 +331,36 @@ class LexicalLinter
     return false
 
   lintPlus: (token) ->
-    # We can't check this inside of interpolations right now, because the
+    # We can"t check this inside of interpolations right now, because the
     # plusses used for the string type co-ercion are marked not spaced.
     return null if @isInInterpolation() or @isInExtendedRegex()
 
     p = @peek(-1)
-    unaries = ['TERMINATOR', '(', '=', '-', '+', ',', 'CALL_START',
-          'INDEX_START', '..', '...', 'COMPARE', 'IF',
-          'THROW', 'LOGIC', 'POST_IF', ':', '[', 'INDENT']
+    unaries = ["TERMINATOR", "(", "=", "-", "+", ",", "CALL_START",
+          "INDEX_START", "..", "...", "COMPARE", "IF",
+          "THROW", "LOGIC", "POST_IF", ":", "[", "INDENT"]
     isUnary = if not p then false else p[0] in unaries
     if (isUnary and token.spaced) or
           (not isUnary and not token.spaced and not token.newLine)
-      @createLexError('space_operators', {context: token[1]})
+      @createLexError("space_operators", {context: token[1]})
     else
       null
 
   lintMath: (token) ->
     if not token.spaced and not token.newLine
-      @createLexError('space_operators', {context: token[1]})
+      @createLexError("space_operators", {context: token[1]})
     else
       null
 
   lintCall: (token) ->
-    if token[0] == 'CALL_START'
+    if token[0] == "CALL_START"
       p = @peek(-1)
-      # Track regex calls, to know (approximately) if we're in an
+      # Track regex calls, to know (approximately) if we"re in an
       # extended regex.
-      token.isRegex = p and p[0] == 'IDENTIFIER' and p[1] == 'RegExp'
+      token.isRegex = p and p[0] == "IDENTIFIER" and p[1] == "RegExp"
       @callTokens.push(token)
       if token.generated
-        return @createLexError('no_implicit_parens')
+        return @createLexError("no_implicit_parens")
       else
         return null
     else
@@ -374,27 +374,27 @@ class LexicalLinter
       i = -1
       loop
         t = @peek(i)
-        if not t? or t[0] == 'TERMINATOR'
-          return @createLexError('no_implicit_braces')
-        if t[0] == 'CLASS'
+        if not t? or t[0] == "TERMINATOR"
+          return @createLexError("no_implicit_braces")
+        if t[0] == "CLASS"
           return null
         i -= 1
     else
       return null
 
   lintJavascript:(token) ->
-    @createLexError('no_backticks')
+    @createLexError("no_backticks")
 
   lintThrow: (token) ->
     [n1, n2] = [@peek(), @peek(2)]
     # Catch literals and string interpolations, which are wrapped in
     # parens.
-    nextIsString = n1[0] == 'STRING' or (n1[0] == '(' and n2[0] == 'STRING')
-    @createLexError('no_throwing_strings') if nextIsString
+    nextIsString = n1[0] == "STRING" or (n1[0] == "(" and n2[0] == "STRING")
+    @createLexError("no_throwing_strings") if nextIsString
 
   lintIncrement: (token) ->
-    attrs = {context: "found '#{token[0]}'"}
-    @createLexError('no_plusplus', attrs)
+    attrs = {context: "found #{token[0]}"}
+    @createLexError("no_plusplus", attrs)
 
   # Return an error if the given indentation token is not correct.
   lintIndentation: (token) ->
@@ -402,12 +402,12 @@ class LexicalLinter
 
     return null if token.generated?
 
-    # HACK: CoffeeScript's lexer insert indentation in string
+    # HACK: CoffeeScript"s lexer insert indentation in string
     # interpolations that start with spaces e.g. "#{ 123 }"
     # so ignore such cases. Are there other times an indentation
-    # could possibly follow a '+'?
+    # could possibly follow a "+"?
     previous = @peek(-2)
-    isInterpIndent = previous and previous[0] == '+'
+    isInterpIndent = previous and previous[0] == "+"
 
     # Ignore the indentation inside of an array, so that
     # we can allow things like:
@@ -421,9 +421,9 @@ class LexicalLinter
     #   a = b =
     #   c = d
     previousSymbol = @peek(-1)?[0]
-    isMultiline = previousSymbol in ['=', ',']
+    isMultiline = previousSymbol in ["=", ","]
 
-    # Summarize the indentation conditions we'd like to ignore
+    # Summarize the indentation conditions we"d like to ignore
     ignoreIndent = isInterpIndent or isArrayIndent or isMultiline
 
     # Compensate for indentation in function invocations that span multiple
@@ -434,30 +434,30 @@ class LexicalLinter
       numIndents -= previousIndentation
 
     # Now check the indentation.
-    expected = @config['indentation'].value
+    expected = @config["indentation"].value
     if not ignoreIndent and numIndents != expected
       context = "Expected #{expected} " +
             "got #{numIndents}"
-      @createLexError('indentation', {context})
+      @createLexError("indentation", {context})
     else
       null
 
   lintClass: (token) ->
     # TODO: you can do some crazy shit in CoffeeScript, like
-    # class func().ClassName. Don't allow that.
+    # class func().ClassName. Don"t allow that.
 
-    # Don't try to lint the names of anonymous classes.
-    return null if token.newLine? or @peek()[0] in ['INDENT', 'EXTENDS']
+    # Don"t try to lint the names of anonymous classes.
+    return null if token.newLine? or @peek()[0] in ["INDENT", "EXTENDS"]
 
-    # It's common to assign a class to a global namespace, e.g.
+    # It"s common to assign a class to a global namespace, e.g.
     # exports.MyClassName, so loop through the next tokens until
     # we find the real identifier.
     className = null
     offset = 1
     until className
-      if @peek(offset + 1)?[0] == '.'
+      if @peek(offset + 1)?[0] == "."
         offset += 2
-      else if @peek(offset)?[0] == '@'
+      else if @peek(offset)?[0] == "@"
         offset += 1
       else
         className = @peek(offset)[1]
@@ -465,7 +465,7 @@ class LexicalLinter
     # Now check for the error.
     if not coffeelint.Regexes.CAMEL_CASE.test(className)
       attrs = {context: "class name: #{className}"}
-      @createLexError('camel_case_classes', attrs)
+      @createLexError("camel_case_classes", attrs)
     else
       null
 
@@ -485,9 +485,9 @@ class LexicalLinter
 
   # Return true if the current token is part of a property access
   # that is split across lines, for example:
-  #   $('body')
-  #     .addClass('foo')
-  #     .removeClass('bar')
+  #   $("body")
+  #     .addClass("foo")
+  #     .removeClass("bar")
   isChainedCall: () ->
     # Get the index of the second most recent new line.
     lines = (i for token, i in @tokens[..@i] when token.newLine?)
@@ -501,7 +501,7 @@ class LexicalLinter
     # look-up.
     tokens = [@tokens[lastNewLineIndex], @tokens[lastNewLineIndex + 1]]
 
-    return !!(t for t in tokens when t and t[0] == '.').length
+    return !!(t for t in tokens when t and t[0] == ".").length
 
 
 # A class that performs static analysis of the abstract
@@ -522,43 +522,43 @@ class ASTLinter
     @lintNode(@node)
     @errors
 
-  # Lint the AST node and return it's cyclomatic complexity.
+  # Lint the AST node and return it"s cyclomatic complexity.
   lintNode: (node) ->
 
     # Get the complexity of the current node.
     name = node.constructor.name
-    complexity = if name in ['If', 'While', 'For', 'Try']
+    complexity = if name in ["If", "While", "For", "Try"]
       1
-    else if name == 'Op' and node.operator in ['&&', '||']
+    else if name == "Op" and node.operator in ["&&", "||"]
       1
-    else if name == 'Switch'
+    else if name == "Switch"
       node.cases.length
     else
       0
 
-    # Add the complexity of all child's nodes to this one.
+    # Add the complexity of all child"s nodes to this one.
     node.eachChild (childNode) =>
       return false unless childNode
       complexity += @lintNode(childNode)
       return true
 
-    # If the current node is a function, and it's over our limit, add an
+    # If the current node is a function, and it"s over our limit, add an
     # error to the list.
     rule = @config.cyclomatic_complexity
-    if name == 'Code' and complexity >= rule.value
+    if name == "Code" and complexity >= rule.value
       attrs = {
         context: complexity + 1
         level: rule.level
         line: 0
       }
-      error = createError 'cyclomatic_complexity', attrs
+      error = createError "cyclomatic_complexity", attrs
       @errors.push error if error
 
     # Return the complexity for the benefit of parent nodes.
     return complexity
 
   _parseCoffeeScriptError: (coffeeError) ->
-    rule = coffeelint.Rule['coffeescript_error']
+    rule = coffeelint.Rule["coffeescript_error"]
 
     message = coffeeError.toString()
 
@@ -571,7 +571,7 @@ class ASTLinter
       level: rule.level
       lineNumber: lineNumber
     }
-    return  createError 'coffeescript_error', attrs
+    return  createError "coffeescript_error", attrs
 
 
 # Check the source against the given configuration and return an array
@@ -579,15 +579,15 @@ class ASTLinter
 # properties:
 #
 #   {
-#     rule:       'Name of the violated rule',
-#     lineNumber: 'Number of the line that caused the violation',
-#     level:      'The error level of the violated rule',
-#     message:    'Information about the violated rule',
-#     context:    'Optional details about why the rule was violated'
+#     rule:       "Name of the violated rule",
+#     lineNumber: "Number of the line that caused the violation",
+#     level:      "The error level of the violated rule",
+#     message:    "Information about the violated rule",
+#     context:    "Optional details about why the rule was violated"
 #   }
 #
 coffeelint.lint = (source, userConfig = {}) ->
-  lines = source.split('\n')
+  lines = source.split("\n")
 
   # Merge default and user configuration.
   config = {}
@@ -598,12 +598,12 @@ coffeelint.lint = (source, userConfig = {}) ->
   initiallyDisabled = []
   for line in lines
     s = coffeelint.Regexes.CONFIG_STATEMENT.exec(line)
-    if s? and s.length > 2 and 'enable' in s
+    if s? and s.length > 2 and "enable" in s
       for r in s[1..]
-        unless r in ['enable','disable']
-          unless r of config and config[r].level in ['warn','error']
+        unless r in ["enable","disable"]
+          unless r of config and config[r].level in ["warn","error"]
             initiallyDisabled.push(r)
-            config[r] = { level: 'error' }
+            config[r] = { level: "error" }
 
    # Do AST linting first so all compile errors are caught.
   astErrors = new ASTLinter(source, config).lint()
@@ -639,9 +639,9 @@ coffeelint.lint = (source, userConfig = {}) ->
     for cmd of blockConfig
       rules = blockConfig[cmd][i]
       {
-        'disable': ->
+        "disable": ->
           disabled = disabled.concat(rules)
-        'enable': ->
+        "enable": ->
           difference(disabled, rules)
           disabled = initiallyDisabled if rules.length is 0
       }[cmd]() if rules?
@@ -654,7 +654,7 @@ coffeelint.lint = (source, userConfig = {}) ->
         errors.push e unless e.rule in disabled
 
   blockConfig =
-    'enable': {}
-    'disable': {}
+    "enable": {}
+    "disable": {}
 
   return errors
