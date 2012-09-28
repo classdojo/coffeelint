@@ -1,3 +1,12 @@
+###
+CoffeeLint
+
+Copyright (c) 2011 Matthew Perpick.
+Modified 2012 by gareth@classdojo.com (Gareth Aye)
+CoffeeLint is freely distributable under the MIT license.
+###
+
+
 coffeelint = require("./coffeelint")
 CoffeeScript = require("coffee-script")
 

@@ -41,7 +41,7 @@ coffeelint.Level =
 coffeelint.Rule =
   identifier:
     level: coffeelint.Level.ERROR
-    message: "Id doesn't match [a-zA-Z][a-zA-Z\d]+ or [A-Z](_?[A-Z\d]*)*"
+    message: "ID doesn't match [a-zA-Z][a-zA-Z\d]+ or [A-Z](_?[A-Z\d]*)*"
   no_tabs:
     level: coffeelint.Level.ERROR
     message: "Line contains tab indentation"
