@@ -7,18 +7,16 @@ CoffeeLint is freely distributable under the MIT license.
 ###
 
 
-# Coffeelint"s namespace.
+# Coffeelint's namespace.
 coffeelint = {}
 
 if exports?
-  # If we"re running in node, export our module and
-  # load dependencies.
+  # If we're running in node, export our module and load dependencies.
   coffeelint = exports
-  CoffeeScript = require "coffee-script"
+  CoffeeScript = require("coffee-script")
 else
-  # If we"re in the browser, export out module to
-  # global scope. Assume CoffeeScript is already
-  # loaded.
+  # If we're in the browser, export out module to global scope.
+  # Assume CoffeeScript is already loaded.
   this.coffeelint = coffeelint
   CoffeeScript = this.CoffeeScript
 
@@ -34,7 +32,7 @@ coffeelint.Level =
   IGNORE: "ignore"
 
 
-# CoffeeLint"s default rule configuration.
+# CoffeeLint's default rule configuration.
 coffeelint.Rule =
   no_tabs:
     level: coffeelint.Level.ERROR
@@ -107,8 +105,7 @@ defaults = (source, defaults) ->
   extend({}, defaults, source)
 
 
-# Create an error object for the given rule with the given
-# attributes.
+# Create an error object for the given rule with the given attributes.
 createError = (rule, attrs = {}) ->
   level = attrs.level
   if level not in [coffeelint.Level.ERROR, coffeelint.Level.IGNORE,
@@ -119,25 +116,24 @@ createError = (rule, attrs = {}) ->
     attrs.rule = rule
     return defaults(attrs, coffeelint.Rule[rule])
   else
-    null
+    return null
 
 # Store suppressions in the form of { line #: type }
 blockConfig =
   enable: {}
   disable: {}
 
-#
+
 # A class that performs regex checks on each line of the source.
-#
 class LineLinter
   constructor: (source, config, tokensByLine) ->
     @source = source
     @config = config
-    @line = null
-    @lineNumber = 0
     @tokensByLine = tokensByLine
     @lines = @source.split("\n")
     @lineCount = @lines.length
+    @line = null
+    @lineNumber = 0
 
   lint: () ->
     errors = []
@@ -147,8 +143,15 @@ class LineLinter
       errors = errors.concat(@lintLine())
     return errors
 
-  # Return an error if the line contained failed a rule, null otherwise.
+  # Return an array of errors in the current line.
   lintLine: () ->
+    # Only check lines that have compiled tokens. This helps
+    # us ignore tabs in the middle of multi line strings, heredocs, etc.
+    # since they are all reduced to a single token whose line number
+    # is the start of the expression.
+    if not @lineHasToken()
+      return []
+
     errors = []
     errors.push(@checkTabs())
     errors.push(@checkTrailingWhitespace())
@@ -159,38 +162,36 @@ class LineLinter
     return errors.filter (error) -> error != null
 
   checkTabs: () ->
-    # Only check lines that have compiled tokens. This helps
-    # us ignore tabs in the middle of multi line strings, heredocs, etc.
-    # since they are all reduced to a single token whose line number
-    # is the start of the expression.
+    # TODO(gareth): Why [0]?
     indentation = @line.split(coffeelint.Regexes.INDENTATION)[0]
-    if @lineHasToken() and "\t" in indentation
-      @createLineError("no_tabs")
+    if "\t" in indentation
+      return @createLineError("no_tabs")
     else
-      null
+      return null
 
   checkTrailingWhitespace: () ->
-    if coffeelint.Regexes.TRAILING_WHITESPACE.test(@line)
-      @createLineError("no_trailing_whitespace")
+    whitespace = coffeelint.Regexes.TRAILING_WHITESPACE.test(@line)
+    if whitespace
+      return @createLineError("no_trailing_whitespace")
     else
-      null
+      return null
 
   checkLineLength: () ->
     rule = "max_line_length"
     max = @config[rule]?.value
     if max and max < @line.length
-      @createLineError(rule)
+      return @createLineError(rule)
     else
-      null
+      return null
 
   checkTrailingSemicolon: () ->
-    hasSemicolon = coffeelint.Regexes.TRAILING_SEMICOLON.test(@line)
-    [first..., last] = @getLineTokens()
-    hasNewLine = last and last.newLine?
-    # Don"t throw errors when the contents of  multiline strings,
+    # Don't throw errors when the contents of  multiline strings,
     # regexes and the like end in ";"
-    if hasSemicolon and not hasNewLine and @lineHasToken()
-      @createLineError("no_trailing_semicolons")
+    semicolon = coffeelint.Regexes.TRAILING_SEMICOLON.test(@line)
+    [first..., last] = @getLineTokens()
+    newline = last and last.newLine?
+    if semicolon and not newline
+      return @createLineError("no_trailing_semicolons")
     else
       return null
 
@@ -198,7 +199,8 @@ class LineLinter
     rule = "line_endings"
     ending = @config[rule]?.value
 
-    return null if not ending or @isLastLine() or not @line
+    if not ending or @isLastLine() or not @line
+      return null
 
     lastChar = @line[@line.length - 1]
     valid = if ending == "windows"
@@ -240,17 +242,14 @@ class LineLinter
   getLineTokens: () ->
     @tokensByLine[@lineNumber] || []
 
-#
-# A class that performs checks on the output of CoffeeScript"s
-# lexer.
-#
-class LexicalLinter
 
+# A class that performs checks on the output of CoffeeScript's lexer.
+class LexicalLinter
   constructor: (source, config) ->
     @source = source
     @tokens = CoffeeScript.tokens(source)
     @config = config
-    @i = 0        # The index of the current token we"re linting.
+    @i = 0        # The index of the current token we're linting.
     @tokensByLine = {}  # A map of tokens by line.
     @arrayTokens = []   # A stack tracking the array token pairs.
     @parenTokens = []   # A stack tracking the parens token pairs.
@@ -264,10 +263,9 @@ class LexicalLinter
       @i = i
       error = @lintToken(token)
       errors.push(error) if error
-    errors
+    return errors
 
-  # Return an error if the given token fails a lint check, false
-  # otherwise.
+  # Return an error if the given token fails a lint check, false otherwise.
   lintToken: (token) ->
     [type, value, lineNumber] = token
 
@@ -300,8 +298,7 @@ class LexicalLinter
       @arrayTokens.push(token)
     else if token[0] == "]"
       @arrayTokens.pop()
-    # Return null, since we"re not really linting
-    # anything here.
+    # Return null, since we're not really linting anything here.
     null
 
   lintParens: (token) ->
@@ -310,14 +307,14 @@ class LexicalLinter
       n1 = @peek(1)
       n2 = @peek(2)
       # String interpolations start with "" + so start the type co-ercion,
-      # so track if we"re inside of one. This is most definitely not
+      # so track if we're inside of one. This is most definitely not
       # 100% true but what else can we do?
       i = n1 and n2 and n1[0] == "STRING" and n2[0] == "+"
       token.isInterpolation = i
       @parenTokens.push(token)
     else
       @parenTokens.pop()
-    # We"re not linting, just tracking interpolations.
+    # We're not linting, just tracking interpolations.
     null
 
   isInInterpolation: () ->
@@ -331,7 +328,7 @@ class LexicalLinter
     return false
 
   lintPlus: (token) ->
-    # We can"t check this inside of interpolations right now, because the
+    # We can't check this inside of interpolations right now, because the
     # plusses used for the string type co-ercion are marked not spaced.
     return null if @isInInterpolation() or @isInExtendedRegex()
 
@@ -355,7 +352,7 @@ class LexicalLinter
   lintCall: (token) ->
     if token[0] == "CALL_START"
       p = @peek(-1)
-      # Track regex calls, to know (approximately) if we"re in an
+      # Track regex calls, to know (approximately) if we're in an
       # extended regex.
       token.isRegex = p and p[0] == "IDENTIFIER" and p[1] == "RegExp"
       @callTokens.push(token)
@@ -402,7 +399,7 @@ class LexicalLinter
 
     return null if token.generated?
 
-    # HACK: CoffeeScript"s lexer insert indentation in string
+    # HACK: CoffeeScript's lexer insert indentation in string
     # interpolations that start with spaces e.g. "#{ 123 }"
     # so ignore such cases. Are there other times an indentation
     # could possibly follow a "+"?
@@ -423,7 +420,7 @@ class LexicalLinter
     previousSymbol = @peek(-1)?[0]
     isMultiline = previousSymbol in ["=", ","]
 
-    # Summarize the indentation conditions we"d like to ignore
+    # Summarize the indentation conditions we'd like to ignore
     ignoreIndent = isInterpIndent or isArrayIndent or isMultiline
 
     # Compensate for indentation in function invocations that span multiple
@@ -444,12 +441,12 @@ class LexicalLinter
 
   lintClass: (token) ->
     # TODO: you can do some crazy shit in CoffeeScript, like
-    # class func().ClassName. Don"t allow that.
+    # class func().ClassName. Don't allow that.
 
-    # Don"t try to lint the names of anonymous classes.
+    # Don't try to lint the names of anonymous classes.
     return null if token.newLine? or @peek()[0] in ["INDENT", "EXTENDS"]
 
-    # It"s common to assign a class to a global namespace, e.g.
+    # It's common to assign a class to a global namespace, e.g.
     # exports.MyClassName, so loop through the next tokens until
     # we find the real identifier.
     className = null
@@ -507,7 +504,6 @@ class LexicalLinter
 # A class that performs static analysis of the abstract
 # syntax tree.
 class ASTLinter
-
   constructor: (source, config) ->
     @source = source
     @config = config
@@ -522,7 +518,7 @@ class ASTLinter
     @lintNode(@node)
     @errors
 
-  # Lint the AST node and return it"s cyclomatic complexity.
+  # Lint the AST node and return it's cyclomatic complexity.
   lintNode: (node) ->
 
     # Get the complexity of the current node.
@@ -536,13 +532,13 @@ class ASTLinter
     else
       0
 
-    # Add the complexity of all child"s nodes to this one.
+    # Add the complexity of all child's nodes to this one.
     node.eachChild (childNode) =>
       return false unless childNode
       complexity += @lintNode(childNode)
       return true
 
-    # If the current node is a function, and it"s over our limit, add an
+    # If the current node is a function, and it's over our limit, add an
     # error to the list.
     rule = @config.cyclomatic_complexity
     if name == "Code" and complexity >= rule.value
