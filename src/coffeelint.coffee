@@ -39,6 +39,9 @@ coffeelint.Level =
 
 # CoffeeLint's default rule configuration.
 coffeelint.Rule =
+  identifier:
+    level: coffeelint.Level.ERROR
+    message: "Id doesn't match [a-zA-Z][a-zA-Z\d]+ or [A-Z](_?[A-Z\d]*)*"
   no_tabs:
     level: coffeelint.Level.ERROR
     message: "Line contains tab indentation"
@@ -92,6 +95,8 @@ coffeelint.Rule =
 
 # Some repeatedly used regular expressions.
 coffeelint.Regexes =
+  IDENTIFIER: /^[a-zA-Z][a-zA-Z\d]*$/
+  CONSTANT: /^[A-Z](_?[A-Z\d]*)*$/
   TRAILING_WHITESPACE: /[^\s]+[\t ]+\r?$/
   INDENTATION: /\S/
   CAMEL_CASE: /^[A-Z][a-zA-Z\d]*$/
@@ -161,7 +166,8 @@ coffeelint.lint = (source, userConfig = {}) ->
             config[r] = { level: "error" }
 
    # Do AST linting first so all compile errors are caught.
-  astErrors = new ASTLinter(source, config).lint()
+  astLinter = new ASTLinter(source, config)
+  astErrors = astLinter.lint()
 
   # Do lexical linting.
   lexicalLinter = new LexicalLinter(source, config)

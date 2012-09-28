@@ -35,19 +35,27 @@ class LexicalLinter
 
     # Now lint it.
     switch type
-      when "INDENT"         then @lintIndentation(token)
-      when "CLASS"          then @lintClass(token)
-      when "{"            then @lintBrace(token)
-      when "++", "--"         then @lintIncrement(token)
-      when "THROW"          then @lintThrow(token)
-      when "[", "]"         then @lintArray(token)
-      when "(", ")"         then @lintParens(token)
-      when "JS"           then @lintJavascript(token)
+      when "IDENTIFIER" then @lintIdentifier(token)
+      when "INDENT" then @lintIndentation(token)
+      when "CLASS" then @lintClass(token)
+      when "{" then @lintBrace(token)
+      when "++", "--" then @lintIncrement(token)
+      when "THROW" then @lintThrow(token)
+      when "[", "]" then @lintArray(token)
+      when "(", ")" then @lintParens(token)
+      when "JS" then @lintJavascript(token)
       when "CALL_START", "CALL_END" then @lintCall(token)
-      when "+", "-"         then @lintPlus(token)
-      when "=", "MATH", "COMPARE", "LOGIC"
-        @lintMath(token)
+      when "+", "-" then @lintPlus(token)
+      when "=", "MATH", "COMPARE", "LOGIC" then @lintMath(token)
       else null
+
+  lintIdentifier: (token) ->
+    name = token[1]
+    if coffeelint.Regexes.IDENTIFIER.test(name)
+      return null
+    else if coffeelint.Regexes.CONSTANT.test(name)
+      return null
+    return @createLexError("identifier", { context: "identifier: #{name}" })
 
   # Lint the given array token.
   lintArray: (token) ->
